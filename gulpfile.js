@@ -5,7 +5,8 @@ var gulp = require('gulp'),
 	compass = require('gulp-compass'),
 	argv = require('yargs').argv,
 	del = require('del'),
-	tinypng = require('gulp-tinypng-compress');
+	tinypng = require('gulp-tinypng-compress'),
+	browserSync = require('browser-sync').create();
 
 gulp.task('hello', function() {
 	console.log('Hello! Everything is OK!');
@@ -33,8 +34,17 @@ gulp.task('compass', function() {
 		.on('error', function(error) {
 			console.log(error);
 			this.emit('end');
-		});
+		})
+		.pipe(browserSync.stream());
 });
+
+// browser sync
+gulp.task('browser-sync', ['compass'], function() {
+	browserSync.init({
+		server: './dist'
+	});
+});
+
 
 // images
 gulp.task('images:copy', function() {
@@ -63,13 +73,22 @@ gulp.task('clear:dist', function() {
 });
 
 // watcher
-gulp.task('watch', function() {
+gulp.task('watch', ['browser-sync'], function() {
 	gulp.watch('./app/scss/*.scss', ['compass']);
-	gulp.watch('./app/jade/*.jade', ['jade']);
-	gulp.watch('./app/jade/**/*.jade', ['jade']);
+	gulp.watch('./app/jade/**/*', ['jade']).on('change', browserSync.reload);
 });
 
 // generate dist
 gulp.task('default', ['images:copy', 'jade', 'compass'], function() {
 
 });
+
+/*
+	TODO:
+		js copy
+		js minify
+		fonts copy
+		*.css copy
+		*.css minify
+		dist/css megree & minify
+*/
