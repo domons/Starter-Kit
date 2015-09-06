@@ -1,21 +1,26 @@
+var TINYPNG_API_KEY = ''; // get your api key - https://tinypng.com/developers
+
 var gulp = require('gulp'),
 	jade = require('gulp-jade'),
 	compass = require('gulp-compass'),
-	argv = require('yargs').argv
-	del = require('del');
+	argv = require('yargs').argv,
+	del = require('del'),
+	tinypng = require('gulp-tinypng-compress');
 
 gulp.task('hello', function() {
 	console.log('Hello! Everything is OK!');
 });
 
+// compile jade
 gulp.task('jade', function() {
 	gulp.src('./app/jade/pages/*.jade')
 		.pipe(jade({
-			pretty: argv.prod ? false : true
+			pretty: ! argv.prod
 		}))
-		.pipe(gulp.dest('./dist/'))
+		.pipe(gulp.dest('./dist/'));
 });
 
+// compile sass
 gulp.task('compass', function() {
 	gulp.src(['./app/scss/main.scss'])
 		.pipe(compass({
@@ -31,19 +36,40 @@ gulp.task('compass', function() {
 		});
 });
 
-gulp.task('images', function() {
+// images
+gulp.task('images:copy', function() {
 	gulp.src('./app/images/**/*')
-		.pipe(gulp.dest('./dist/images'))
+		.pipe(gulp.dest('./dist/images'));
 });
 
-gulp.task('clean', function() {
+gulp.task('images:tinypng', function () {
+	gulp.src('./app/images/**/*.{png,jpg,jpeg}')
+		.pipe(tinypng({
+			key: TINYPNG_API_KEY,
+			log: true
+		}))
+		.pipe(gulp.dest('./dist/images'));
+});
+
+// clear dist
+gulp.task('clear', function() {
+	del('.sass-cache');
 	del('dist');
 });
 
-gulp.task('clean:dist', function(callback){
-	del(['dist/**/*', '!dist/images', '!dist/images/**/*'], callback)
+gulp.task('clear:dist', function() {
+	del('.sass-cache');
+	del(['dist/**/*', '!dist/images', '!dist/images/**/*']);
 });
 
-gulp.task('default', ['jade', 'images', 'compass'], function() {
+// watcher
+gulp.task('watch', function() {
+	gulp.watch('./app/scss/*.scss', ['compass']);
+	gulp.watch('./app/jade/*.jade', ['jade']);
+	gulp.watch('./app/jade/**/*.jade', ['jade']);
+});
+
+// generate dist
+gulp.task('default', ['images:copy', 'jade', 'compass'], function() {
 
 });

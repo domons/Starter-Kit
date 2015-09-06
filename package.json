@@ -20,6 +20,7 @@
     "gulp-jade": "~1.1.0",
     "gulp-compass": "~2.1.0",
     "del": "~2.0.1",
-    "yargs": "~3.24.0"
+    "yargs": "~3.24.0",
+    "gulp-tinypng-compress": "~1.1.8"
   }
 }
