@@ -39,7 +39,7 @@ gulp.task('compass', function() {
 });
 
 // browser sync
-gulp.task('browser-sync', ['compass'], function() {
+gulp.task('browser-sync', function() {
 	browserSync.init({
 		server: './dist'
 	});
