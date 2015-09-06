@@ -1,0 +1,13 @@
+/* TEAM */
+Title: Name
+Site:
+Email:
+Location:
+
+/* THANKS */
+Dominik Barylski: https://github.com/domons/Starter-Kit
+
+/* SITE */
+Last update: YYYY/MM/DD
+Standards: HTML5, CSS3, ...
+Components: domons/Starter-Kit
