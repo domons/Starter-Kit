@@ -1,3 +1,5 @@
+# It is not finished yet!
+
 # Starter-Kit
 Ground zero for your next project using [Compass](http://compass-style.org/) and [Jade](http://jade-lang.com/).
 
