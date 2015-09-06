@@ -4,7 +4,7 @@
 Ground zero for your next project using [Compass](http://compass-style.org/) and [Jade](http://jade-lang.com/).
 
 ## How to install
-- If you haven't [Node.js](https://nodejs.org/en/), [Compass](http://compass-style.org/) on your computer, install it.
+- If you haven't [Node.js](https://nodejs.org/en/) and [Compass](http://compass-style.org/) with Ruby on your computer, install it.
 - Run `git clone https://github.com/domons/Starter-Kit.git`
 - Then `cd Starter-Kit`
 - and `npm install gulp -g`
