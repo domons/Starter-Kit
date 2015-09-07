@@ -2,23 +2,25 @@
  TODO:
  js copy
  js minify
- fonts copy
  *.css copy
  *.css minify
  dist/css megree & minify
 */
 
-/*---------------
+/*----------------------------------
 | Configuration
-----------------*/
+| Get your tinypng api key:
+|	https://tinypng.com/developers
+-----------------------------------*/
 var config = {
-	tinypng_api_key: '', // get your api key - https://tinypng.com/developers
+	tinypng_api_key: '',
 	app_base: './app',
 	dist_base: './dist',
-	sass_cache: './.sass-cache'
-};
+	sass_cache: './.sass-cache',
+	autoprefixer: ['last 3 version']
+},
 
-var path = {
+path = {
 	app: {
 		base: config.app_base,
 		css: config.app_base + '/css',
@@ -46,39 +48,40 @@ var path = {
 		js: config.app_base + '/js/**/*.js',
 		scss: config.app_base + '/scss/**/*.scss'
 	}
-};
+},
 
 /*---------------------------
 | Scss files to compilation
 ----------------------------*/
-var scssCompile = [
+scssCompile = [
 	path.app.scss + '/main.scss'
-];
+],
 
-/*---------------------------
+/*--------------
 | Concat rules
-----------------------------*/
-var concatJS = {
+---------------*/
+concatJS = {
 	'main.js': [
 		'main.js'
 	]
-};
+},
 
-var concatCSS = {
+concatCSS = {
 
-};
+},
 
 /*------------
 | Gulp tasks
 -------------*/
-var gulp = require('gulp'),
-	jade = require('gulp-jade'),
-	compass = require('gulp-compass'),
-	argv = require('yargs').argv,
-	del = require('del'),
-	tinypng = require('gulp-tinypng-compress'),
-	browserSync = require('browser-sync').create(),
-	watch = require('gulp-watch');
+gulp = require('gulp'),
+jade = require('gulp-jade'),
+compass = require('gulp-compass'),
+argv = require('yargs').argv,
+del = require('del'),
+tinypng = require('gulp-tinypng-compress'),
+browserSync = require('browser-sync').create(),
+watch = require('gulp-watch'),
+autoprefixer = require('gulp-autoprefixer');
 
 gulp.task('hello', function() {
 	console.log('Hello! Everything is OK!');
@@ -108,6 +111,10 @@ gulp.task('compass', function() {
 			console.log(error);
 			this.emit('end');
 		})
+		.pipe(autoprefixer({
+			browsers: config.autoprefixer
+		}))
+		.pipe(gulp.dest(path.dist.css))
 		.pipe(browserSync.stream());
 });
 
@@ -180,7 +187,7 @@ gulp.task('generate', [
 ]);
 
 // browser-sync & watcher
-gulp.task('default', ['generate', 'images:copy-watch'], function() {
+gulp.task('default', ['generate', 'images:copy-watch', 'fonts-watch'], function() {
 	browserSync.init({
 		server: path.dist.base
 	});
