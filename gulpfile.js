@@ -1,7 +1,21 @@
+/*
+ TODO:
+ js copy
+ js minify
+ fonts copy
+ *.css copy
+ *.css minify
+ dist/css megree & minify
+*/
+
+/*---------------
+| Configuration
+----------------*/
 var config = {
+	tinypng_api_key: '', // get your api key - https://tinypng.com/developers
 	app_base: './app',
 	dist_base: './dist',
-	tinypng_api_key: '' // get your api key - https://tinypng.com/developers
+	sass_cache: './.sass-cache'
 };
 
 var path = {
@@ -34,25 +48,37 @@ var path = {
 	}
 };
 
-var jsMegree = {
+/*---------------------------
+| Scss files to compilation
+----------------------------*/
+var scssCompile = [
+	path.app.scss + '/main.scss'
+];
+
+/*---------------------------
+| Concat rules
+----------------------------*/
+var concatJS = {
 	'main.js': [
 		'main.js'
 	]
 };
 
-// Files scss to compile
-var scssOutput = [
-	'./app/scss/main.scss'
-];
+var concatCSS = {
 
+};
 
+/*------------
+| Gulp tasks
+-------------*/
 var gulp = require('gulp'),
 	jade = require('gulp-jade'),
 	compass = require('gulp-compass'),
 	argv = require('yargs').argv,
 	del = require('del'),
 	tinypng = require('gulp-tinypng-compress'),
-	browserSync = require('browser-sync').create();
+	browserSync = require('browser-sync').create(),
+	watch = require('gulp-watch');
 
 gulp.task('hello', function() {
 	console.log('Hello! Everything is OK!');
@@ -69,7 +95,7 @@ gulp.task('jade', function() {
 
 // compile sass
 gulp.task('compass', function() {
-	gulp.src(scssOutput)
+	gulp.src(scssCompile)
 		.pipe(compass({
 			css: path.dist.css,
 			sass: path.app.scss,
@@ -98,6 +124,12 @@ gulp.task('images:copy', function() {
 		.pipe(gulp.dest(path.dist.images));
 });
 
+gulp.task('images:copy-watch', function() {
+	gulp.src(path.watch.images, { base: path.app.images })
+		.pipe(watch(path.app.images, { base: path.app.images }))
+		.pipe(gulp.dest(path.dist.images));
+});
+
 gulp.task('images:tinypng', function () {
 	gulp.src(path.watch.images_ext)
 		.pipe(tinypng({
@@ -113,15 +145,29 @@ gulp.task('fonts', function() {
 		.pipe(gulp.dest(path.dist.fonts));
 });
 
-// clear dist
-gulp.task('clear', function() {
-	del('.sass-cache');
-	del('dist');
+gulp.task('fonts-watch', function() {
+	gulp.src(path.watch.fonts, { base: path.app.fonts })
+		.pipe(watch(path.app.fonts, { base: path.app.fonts }))
+		.pipe(gulp.dest(path.dist.fonts));
 });
 
-gulp.task('clear:dist', function() {
-	del('.sass-cache');
-	del(['dist/**/*', '!dist/images', '!dist/images/**/*']);
+// clear dist
+gulp.task('clear', function() {
+	if (argv.noimg) {
+		del([
+			config.sass_cache,
+			config.dist_base + '/**/*',
+			'!' + config.dist_base + '/images',
+			'!' + config.dist_base + '/images/**/*'
+		]);
+
+		return;
+	}
+
+	del([
+		config.sass_cache,
+		config.dist_base
+	]);
 });
 
 // generate dist
@@ -134,23 +180,12 @@ gulp.task('generate', [
 ]);
 
 // browser-sync & watcher
-gulp.task('default', function() {
+gulp.task('default', ['generate', 'images:copy-watch'], function() {
 	browserSync.init({
 		server: path.dist.base
 	});
 
 	gulp.watch(path.watch.scss, ['compass']);
 	gulp.watch(path.watch.js, ['javascript']);
-	gulp.watch(path.watch.fonts, ['fonts']);
 	gulp.watch(path.watch.jade, ['jade']).on('change', browserSync.reload);
 });
-
-/*
-	TODO:
-		js copy
-		js minify
-		fonts copy
-		*.css copy
-		*.css minify
-		dist/css megree & minify
-*/
