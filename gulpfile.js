@@ -5,6 +5,7 @@
  *.css copy
  *.css minify
  dist/css megree & minify
+
 */
 
 /*----------------------------------
@@ -17,7 +18,7 @@ var config = {
 	app_base: './app',
 	dist_base: './dist',
 	sass_cache: './.sass-cache',
-	autoprefixer: ['last 3 version']
+	autoprefixer: ['last 12 version']
 },
 
 path = {
@@ -40,9 +41,10 @@ path = {
 	},
 	watch: {
 		css: config.app_base + '/css/**/*.css',
+		distCss: config.dist_base + '/css/**/*.css',
 		fonts: config.app_base + '/fonts/**/*',
 		images: config.app_base + '/images/**/*',
-		images_ext: config.dist_base + '/images/**/*.{png,jpg,jpeg}',
+		distImages: config.dist_base + '/images/**/*.{png,jpg,jpeg}',
 		jade: config.app_base + '/jade/**/*.jade',
 		jade_pages: config.app_base + '/jade/pages/*.jade',
 		js: config.app_base + '/js/**/*.js',
@@ -81,7 +83,8 @@ del = require('del'),
 tinypng = require('gulp-tinypng-compress'),
 browserSync = require('browser-sync').create(),
 watch = require('gulp-watch'),
-autoprefixer = require('gulp-autoprefixer');
+autoprefixer = require('gulp-autoprefixer'),
+runSequence = require('run-sequence');
 
 gulp.task('hello', function() {
 	console.log('Hello! Everything is OK!');
@@ -89,7 +92,7 @@ gulp.task('hello', function() {
 
 // compile jade
 gulp.task('jade', function() {
-	gulp.src(path.watch.jade_pages)
+	return gulp.src(path.watch.jade_pages)
 		.pipe(jade({
 			pretty: ! argv.prod
 		}))
@@ -98,7 +101,7 @@ gulp.task('jade', function() {
 
 // compile sass
 gulp.task('compass', function() {
-	gulp.src(scssCompile)
+	return gulp.src(scssCompile)
 		.pipe(compass({
 			css: path.dist.css,
 			sass: path.app.scss,
@@ -111,6 +114,11 @@ gulp.task('compass', function() {
 			console.log(error);
 			this.emit('end');
 		})
+		.pipe(gulp.dest(path.dist.css));
+});
+
+gulp.task('postProdCss', function() {
+	return gulp.src(path.watch.distCss)
 		.pipe(autoprefixer({
 			browsers: config.autoprefixer
 		}))
@@ -120,14 +128,14 @@ gulp.task('compass', function() {
 
 // javascript
 gulp.task('javascript', function() {
-	gulp.src(path.watch.js)
+	return gulp.src(path.watch.js)
 		.pipe(gulp.dest(path.dist.js))
 		.pipe(browserSync.stream());
 });
 
 // images
 gulp.task('images:copy', function() {
-	gulp.src(path.watch.images)
+	return gulp.src(path.watch.images)
 		.pipe(gulp.dest(path.dist.images));
 });
 
@@ -138,7 +146,7 @@ gulp.task('images:copy-watch', function() {
 });
 
 gulp.task('images:tinypng', function () {
-	gulp.src(path.watch.images_ext)
+	return gulp.src(path.watch.distImages)
 		.pipe(tinypng({
 			key: config.tinypng_api_key,
 			log: true
@@ -148,7 +156,7 @@ gulp.task('images:tinypng', function () {
 
 // fonts
 gulp.task('fonts', function() {
-	gulp.src(path.watch.fonts)
+	return gulp.src(path.watch.fonts)
 		.pipe(gulp.dest(path.dist.fonts));
 });
 
@@ -161,38 +169,43 @@ gulp.task('fonts-watch', function() {
 // clear dist
 gulp.task('clear', function() {
 	if (argv.noimg) {
-		del([
+		return del([
 			config.sass_cache,
 			config.dist_base + '/**/*',
 			'!' + config.dist_base + '/images',
 			'!' + config.dist_base + '/images/**/*'
 		]);
-
-		return;
 	}
 
-	del([
+	return del([
 		config.sass_cache,
 		config.dist_base
 	]);
 });
 
 // generate dist
-gulp.task('generate', [
-	'images:copy',
-	'fonts',
-	'javascript',
-	'jade',
-	'compass'
-]);
+gulp.task('build', function() {
+	runSequence(
+		'clear',
+		[
+			'fonts',
+			'images:copy',
+			'javascript',
+			'jade'
+		],
+		'compass',
+		'postProdCss'
+	);
+});
 
-// browser-sync & watcher
-gulp.task('default', ['generate', 'images:copy-watch', 'fonts-watch'], function() {
+// browser-sync & watchers
+gulp.task('default', ['images:copy-watch', 'fonts-watch'], function() {
 	browserSync.init({
 		server: path.dist.base
 	});
 
 	gulp.watch(path.watch.scss, ['compass']);
+	gulp.watch(path.watch.distCss, ['postProdCss']);
 	gulp.watch(path.watch.js, ['javascript']);
 	gulp.watch(path.watch.jade, ['jade']).on('change', browserSync.reload);
 });
