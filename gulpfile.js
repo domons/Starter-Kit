@@ -1,11 +1,8 @@
 /*
  TODO:
- js copy
- js minify
+ js concat
  *.css copy
- *.css minify
- dist/css megree & minify
-
+ css concat
 */
 
 /*----------------------------------
@@ -14,41 +11,39 @@
 |	https://tinypng.com/developers
 -----------------------------------*/
 var config = {
-	tinypng_api_key: '',
-	app_base: './app',
-	dist_base: './dist',
-	sass_cache: './.sass-cache',
-	autoprefixer: ['last 12 version']
+	tinypngApiKey: '',
+	appBase: './app',
+	distBase: './dist',
+	sassCache: './.sass-cache',
+	autoprefixer: ['last 5 version']
 },
 
 path = {
 	app: {
-		base: config.app_base,
-		css: config.app_base + '/css',
-		fonts: config.app_base + '/fonts',
-		images: config.app_base + '/images',
-		jade: config.app_base + '/jade',
-		jade_pages: config.app_base + '/jade/pages',
-		js: config.app_base + '/js',
-		scss: config.app_base + '/scss'
+		css: config.appBase + '/css',
+		fonts: config.appBase + '/fonts',
+		images: config.appBase + '/images',
+		jade: config.appBase + '/jade',
+		jade_pages: config.appBase + '/jade/pages',
+		js: config.appBase + '/js',
+		scss: config.appBase + '/scss'
 	},
 	dist: {
-		base: config.dist_base,
-		css: config.dist_base + '/css',
-		fonts: config.dist_base + '/fonts',
-		images: config.dist_base + '/images',
-		js: config.dist_base + '/js'
+		css: config.distBase + '/css',
+		fonts: config.distBase + '/fonts',
+		images: config.distBase + '/images',
+		js: config.distBase + '/js'
 	},
 	watch: {
-		css: config.app_base + '/css/**/*.css',
-		distCss: config.dist_base + '/css/**/*.css',
-		fonts: config.app_base + '/fonts/**/*',
-		images: config.app_base + '/images/**/*',
-		distImages: config.dist_base + '/images/**/*.{png,jpg,jpeg}',
-		jade: config.app_base + '/jade/**/*.jade',
-		jade_pages: config.app_base + '/jade/pages/*.jade',
-		js: config.app_base + '/js/**/*.js',
-		scss: config.app_base + '/scss/**/*.scss'
+		css: config.appBase + '/css/**/*.css',
+		distCss: config.distBase + '/css/**/*.css',
+		fonts: config.appBase + '/fonts/**/*',
+		images: config.appBase + '/images/**/*',
+		distImages: config.distBase + '/images/**/*.{png,jpg,jpeg}',
+		jade: config.appBase + '/jade/**/*.jade',
+		jade_pages: config.appBase + '/jade/pages/*.jade',
+		js: config.appBase + '/js/**/*.js',
+		scss: config.appBase + '/scss/**/*.scss'
 	}
 },
 
@@ -84,7 +79,10 @@ tinypng = require('gulp-tinypng-compress'),
 browserSync = require('browser-sync').create(),
 watch = require('gulp-watch'),
 autoprefixer = require('gulp-autoprefixer'),
-runSequence = require('run-sequence');
+runSequence = require('run-sequence'),
+minifyCss = require('gulp-minify-css'),
+gulpif = require('gulp-if'),
+jsmin = require('gulp-jsmin');
 
 gulp.task('hello', function() {
 	console.log('Hello! Everything is OK!');
@@ -96,7 +94,7 @@ gulp.task('jade', function() {
 		.pipe(jade({
 			pretty: ! argv.prod
 		}))
-		.pipe(gulp.dest(path.dist.base));
+		.pipe(gulp.dest(config.distBase));
 });
 
 // compile sass
@@ -107,7 +105,7 @@ gulp.task('compass', function() {
 			sass: path.app.scss,
 			image: path.dist.images,
 			fonts: path.dist.fonts,
-			style: argv.prod ? 'compressed' : 'expanded',
+			style: 'expanded',
 			relative_assets: false
 		}))
 		.on('error', function(error) {
@@ -117,11 +115,13 @@ gulp.task('compass', function() {
 		.pipe(gulp.dest(path.dist.css));
 });
 
+// post production css
 gulp.task('postProdCss', function() {
 	return gulp.src(path.watch.distCss)
 		.pipe(autoprefixer({
 			browsers: config.autoprefixer
 		}))
+		.pipe(gulpif(argv.prod, minifyCss()))
 		.pipe(gulp.dest(path.dist.css))
 		.pipe(browserSync.stream());
 });
@@ -129,6 +129,7 @@ gulp.task('postProdCss', function() {
 // javascript
 gulp.task('javascript', function() {
 	return gulp.src(path.watch.js)
+		.pipe(gulpif(argv.prod, jsmin()))
 		.pipe(gulp.dest(path.dist.js))
 		.pipe(browserSync.stream());
 });
@@ -148,7 +149,7 @@ gulp.task('images:copy-watch', function() {
 gulp.task('images:tinypng', function () {
 	return gulp.src(path.watch.distImages)
 		.pipe(tinypng({
-			key: config.tinypng_api_key,
+			key: config.tinypngApiKey,
 			log: true
 		}))
 		.pipe(gulp.dest(path.dist.images));
@@ -170,20 +171,20 @@ gulp.task('fonts-watch', function() {
 gulp.task('clear', function() {
 	if (argv.noimg) {
 		return del([
-			config.sass_cache,
-			config.dist_base + '/**/*',
-			'!' + config.dist_base + '/images',
-			'!' + config.dist_base + '/images/**/*'
+			config.sassCache,
+			config.distBase + '/**/*',
+			'!' + config.distBase + '/images',
+			'!' + config.distBase + '/images/**/*'
 		]);
 	}
 
 	return del([
-		config.sass_cache,
-		config.dist_base
+		config.sassCache,
+		config.distBase
 	]);
 });
 
-// generate dist
+// build dist
 gulp.task('build', function() {
 	runSequence(
 		'clear',
@@ -198,10 +199,10 @@ gulp.task('build', function() {
 	);
 });
 
-// browser-sync & watchers
+// dev env | browser-sync & watchers
 gulp.task('default', ['images:copy-watch', 'fonts-watch'], function() {
 	browserSync.init({
-		server: path.dist.base
+		server: config.distBase
 	});
 
 	gulp.watch(path.watch.scss, ['compass']);
