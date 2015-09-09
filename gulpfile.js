@@ -1,8 +1,9 @@
 /*
  TODO:
- js concat
+ js concat order
  *.css copy
  css concat
+ remove standard concat in post prod css
 */
 
 /*----------------------------------
@@ -50,21 +51,26 @@ path = {
 /*---------------------------
 | Scss files to compilation
 ----------------------------*/
-scssCompile = [
+compileScssFiles = [
 	path.app.scss + '/main.scss'
 ],
 
 /*--------------
 | Concat rules
 ---------------*/
-concatJS = {
-	'main.js': [
-		'main.js'
-	]
+concatJsFiles = {
+//	main: [
+//		path.app.js + '/main.js',
+//		path.app.js + '/test.js',
+//		path.app.js + '/*.js'
+//	]
 },
 
-concatCSS = {
-
+concatCssFiles = {
+//	main: [
+//		'main.js',
+//		'test.js'
+//	]
 },
 
 /*------------
@@ -82,7 +88,9 @@ autoprefixer = require('gulp-autoprefixer'),
 runSequence = require('run-sequence'),
 minifyCss = require('gulp-minify-css'),
 gulpif = require('gulp-if'),
-jsmin = require('gulp-jsmin');
+jsmin = require('gulp-jsmin'),
+concat = require('gulp-concat'),
+concatCont = require('gulp-continuous-concat');
 
 gulp.task('hello', function() {
 	console.log('Hello! Everything is OK!');
@@ -99,7 +107,7 @@ gulp.task('jade', function() {
 
 // compile sass
 gulp.task('compass', function() {
-	return gulp.src(scssCompile)
+	return gulp.src(compileScssFiles)
 		.pipe(compass({
 			css: path.dist.css,
 			sass: path.app.scss,
@@ -126,10 +134,46 @@ gulp.task('postProdCss', function() {
 		.pipe(browserSync.stream());
 });
 
-// javascript
-gulp.task('javascript', function() {
+// javascript concat
+function concatJsTask(file) {
+	gulp.task('javascript:concat:' + file, function() {
+		return gulp.src(concatJsFiles[file])
+			.pipe(concat(file + '.js'))
+			.pipe(gulpif(argv.prod, jsmin()))
+			.pipe(gulp.dest(path.dist.js))
+			.pipe(browserSync.stream());
+	});
+}
+
+var concatJsTasks = [];
+for (var file in concatJsFiles) {
+	concatJsTask(file);
+	concatJsTasks.push('javascript:concat:' + file);
+}
+
+gulp.task('javascript:concat', concatJsTasks);
+
+gulp.task('javascript:concat-watch', function() {
+	for (var file in concatJsFiles) {
+		gulp.src(concatJsFiles[file])
+			.pipe(watch(concatJsFiles[file]))
+			.pipe(concatCont(file + '.js'))
+			.pipe(gulp.dest(path.dist.js))
+			.pipe(browserSync.stream());
+	}
+});
+
+// javascript copy
+gulp.task('javascript:copy', function() {
 	return gulp.src(path.watch.js)
 		.pipe(gulpif(argv.prod, jsmin()))
+		.pipe(gulp.dest(path.dist.js))
+		.pipe(browserSync.stream());
+});
+
+gulp.task('javascript:copy-watch', function() {
+	gulp.src(path.watch.js, { base: path.app.js })
+		.pipe(watch(path.app.js, { base: path.app.js }))
 		.pipe(gulp.dest(path.dist.js))
 		.pipe(browserSync.stream());
 });
@@ -184,29 +228,31 @@ gulp.task('clear', function() {
 	]);
 });
 
+// misc
+gulp.task('misc', function () {
+	return gulp.src(config.appBase + '/*.{ico,png,txt}')
+		.pipe(gulp.dest(config.distBase));
+});
+
+var javascriptTask = Object.keys(concatJsFiles).length ? 'javascript:concat' : 'javascript:copy';
+
 // build dist
 gulp.task('build', function() {
 	runSequence(
 		'clear',
-		[
-			'fonts',
-			'images:copy',
-			'javascript',
-			'jade'
-		],
+		['fonts', 'images:copy', javascriptTask, 'jade', 'misc'],
 		'compass',
 		'postProdCss'
 	);
 });
 
 // dev env | browser-sync & watchers
-gulp.task('default', ['images:copy-watch', 'fonts-watch'], function() {
+gulp.task('default', ['images:copy-watch', 'fonts-watch', javascriptTask + '-watch'], function() {
 	browserSync.init({
 		server: config.distBase
 	});
 
 	gulp.watch(path.watch.scss, ['compass']);
 	gulp.watch(path.watch.distCss, ['postProdCss']);
-	gulp.watch(path.watch.js, ['javascript']);
 	gulp.watch(path.watch.jade, ['jade']).on('change', browserSync.reload);
 });
