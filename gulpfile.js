@@ -3,7 +3,6 @@
  js concat order
  *.css copy
  css concat
- remove standard concat in post prod css
 */
 
 /*----------------------------------
@@ -16,7 +15,7 @@ var config = {
 	appBase: './app',
 	distBase: './dist',
 	sassCache: './.sass-cache',
-	autoprefixer: ['last 5 version']
+	autoprefixer: ['last 15 version']
 },
 
 path = {
@@ -61,7 +60,7 @@ compileScssFiles = [
 concatJsFiles = {
 //	main: [
 //		path.app.js + '/main.js',
-//		path.app.js + '/test.js',
+//		path.app.js + '/new.js',
 //		path.app.js + '/*.js'
 //	]
 },
@@ -103,6 +102,16 @@ gulp.task('jade', function() {
 			pretty: ! argv.prod
 		}))
 		.pipe(gulp.dest(config.distBase));
+});
+
+gulp.task('jade-watch', function() {
+	gulp.src(path.watch.jade_pages, { base: path.app.jade_pages })
+		.pipe(watch(path.app.jade_pages, { base: path.app.jade_pages }))
+		.pipe(jade({
+			pretty: ! argv.prod
+		}))
+		.pipe(gulp.dest(config.distBase))
+		.pipe(browserSync.reload({stream:true}));
 });
 
 // compile sass
@@ -158,6 +167,7 @@ gulp.task('javascript:concat-watch', function() {
 		gulp.src(concatJsFiles[file])
 			.pipe(watch(concatJsFiles[file]))
 			.pipe(concatCont(file + '.js'))
+			.pipe(gulpif(argv.prod, jsmin()))
 			.pipe(gulp.dest(path.dist.js))
 			.pipe(browserSync.stream());
 	}
@@ -174,6 +184,7 @@ gulp.task('javascript:copy', function() {
 gulp.task('javascript:copy-watch', function() {
 	gulp.src(path.watch.js, { base: path.app.js })
 		.pipe(watch(path.app.js, { base: path.app.js }))
+		.pipe(gulpif(argv.prod, jsmin()))
 		.pipe(gulp.dest(path.dist.js))
 		.pipe(browserSync.stream());
 });
@@ -247,12 +258,11 @@ gulp.task('build', function() {
 });
 
 // dev env | browser-sync & watchers
-gulp.task('default', ['images:copy-watch', 'fonts-watch', javascriptTask + '-watch'], function() {
+gulp.task('default', ['images:copy-watch', 'fonts-watch', javascriptTask + '-watch', 'jade-watch'], function() {
 	browserSync.init({
 		server: config.distBase
 	});
 
 	gulp.watch(path.watch.scss, ['compass']);
-	gulp.watch(path.watch.distCss, ['postProdCss']);
-	gulp.watch(path.watch.jade, ['jade']).on('change', browserSync.reload);
+	gulp.watch(path.watch.distCss, ['postProdCss']); // nie dziala jesli plik jest nowy, trzeba zrobic watcher taki jak ma fonts lub images ale to przy tasku na app/css
 });
