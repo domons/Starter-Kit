@@ -10,7 +10,7 @@ Ground zero for your next project using [Compass](http://compass-style.org/), [J
 - BrowserSync
 - Minify HTML, CSS, JavaScript
 - Concat CSS, JavaScript
-- Compresses images using tinypng.com
+- Image compression using tinypng.com
 
 
 ## How to install
@@ -23,7 +23,7 @@ Ground zero for your next project using [Compass](http://compass-style.org/), [J
 
 ## Configuration
 #### TinyPng Api Key
-Get your api key from [here](https://tinypng.com/developers) and set it in **config.tinypngApiKey**
+Take api key from [here](https://tinypng.com/developers) and set it in **config.tinypngApiKey**
 
 #### Autoprefixer in CSS
 You can set browsers for autoprefixer in **config.autoprefixer**.
@@ -31,7 +31,7 @@ You can set browsers for autoprefixer in **config.autoprefixer**.
 Example `['last 5 version', 'safari 5', 'ie 8', 'ie 9', 'opera 12.1']`
 
 #### JavaScript concat files
-Example concatJsFiles object:
+Example **concatJsFiles**:
 ```
 concatJsFiles = {
 	result_file_name: [
@@ -56,15 +56,9 @@ If you set empty object `concatJsFiles = { }` all *.js will be copied from app/j
 | Command       | Description   |
 | ------------- | ------------- |
 | `gulp hello`  | Checks if Gulp works |
-| `gulp images:copy` | Copying app/images/ to dist/images/ |
 | `gulp images:tinypng` | Compresses images **from dist/images/** using tinypng.com |
-| `gulp jade` | Compiles jade files |
-| `gulp compass` | Compiles scss files |
-| `gulp postProdCss` | Autoprefixer on dist/css/ files |
-| `gulp postProdCss --prod` | Autoprefixer and minify on dist/css/ files |
-| `gulp fonts` | Copying app/fonts/ to dist/fonts/ |
 | `gulp clear` | Removing .sass-cache/ and whole dist/ directory |
 | `gulp clear --noimg` | Removing .sass-cache/ and dist/ directory except dist/images/ |
-| `gulp build` | Build project (dist/ directory) |
+| `gulp build` | Build project (generate dist/ directory) |
 | `gulp build --prod` | Build project and minify html, css, js |
-| `gulp` | Run dev environment - browser-sync and all watchers |
+| `gulp` | Run dev environment (browser-sync and watchers) |
