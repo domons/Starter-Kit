@@ -5,17 +5,17 @@
  css concat
 */
 
-/*----------------------------------
+/*--------------------------------------------------------
 | Configuration
 | Get your tinypng api key:
 |	https://tinypng.com/developers
------------------------------------*/
+--------------------------------------------------------*/
 var config = {
 	tinypngApiKey: '',
 	appBase: './app',
 	distBase: './dist',
 	sassCache: './.sass-cache',
-	autoprefixer: ['last 15 version']
+	autoprefixer: ['last 5 version']
 },
 
 path = {
@@ -47,16 +47,16 @@ path = {
 	}
 },
 
-/*---------------------------
+/*--------------------------------------------------------
 | Scss files to compilation
-----------------------------*/
+--------------------------------------------------------*/
 compileScssFiles = [
 	path.app.scss + '/main.scss'
 ],
 
-/*--------------
+/*--------------------------------------------------------
 | Concat rules
----------------*/
+--------------------------------------------------------*/
 concatJsFiles = {
 //	main: [
 //		path.app.js + '/main.js',
@@ -72,9 +72,9 @@ concatCssFiles = {
 //	]
 },
 
-/*------------
-| Gulp tasks
--------------*/
+/*--------------------------------------------------------
+| Gulp modules
+--------------------------------------------------------*/
 gulp = require('gulp'),
 jade = require('gulp-jade'),
 compass = require('gulp-compass'),
@@ -91,30 +91,172 @@ jsmin = require('gulp-jsmin'),
 concat = require('gulp-concat'),
 concatCont = require('gulp-continuous-concat');
 
+
+/*--------------------------------------------------------
+ | Test gulp task
+ --------------------------------------------------------*/
 gulp.task('hello', function() {
 	console.log('Hello! Everything is OK!');
 });
 
-// compile jade
-gulp.task('jade', function() {
-	return gulp.src(path.watch.jade_pages)
-		.pipe(jade({
-			pretty: ! argv.prod
-		}))
-		.pipe(gulp.dest(config.distBase));
-});
 
-gulp.task('jade-watch', function() {
-	gulp.src(path.watch.jade_pages, { base: path.app.jade_pages })
-		.pipe(watch(path.app.jade_pages, { base: path.app.jade_pages }))
-		.pipe(jade({
+/*--------------------------------------------------------
+| Jade task
+--------------------------------------------------------*/
+function jadeTask(watcher) {
+	var res = gulp.src(path.watch.jade_pages);
+
+	if (watcher) {
+		res = gulp.src(path.watch.jade_pages, { base: path.app.jade_pages })
+			.pipe(watch(path.app.jade_pages, { base: path.app.jade_pages }));
+	}
+
+	res.pipe(jade({
 			pretty: ! argv.prod
 		}))
 		.pipe(gulp.dest(config.distBase))
 		.pipe(browserSync.reload({stream:true}));
+
+	if ( ! watcher)
+		return res;
+}
+
+
+/*--------------------------------------------------------
+| Post production CSS task
+--------------------------------------------------------*/
+function postProdCssTask(watcher) {
+	var res = gulp.src(path.watch.distCss);
+
+	if (watcher) {
+		res = gulp.src(path.watch.distCss, { base: path.dist.css })
+				.pipe(watch(path.dist.css, { base: path.dist.css }));
+	}
+
+	res.pipe(autoprefixer({
+			browsers: config.autoprefixer
+		}))
+		.pipe(gulpif(argv.prod, minifyCss()))
+		.pipe(gulp.dest(path.dist.css))
+		.pipe(browserSync.stream());
+
+	if ( ! watcher)
+		return res;
+}
+
+
+/*--------------------------------------------------------
+| Javascript copy task
+--------------------------------------------------------*/
+function javascriptCopyTask(watcher) {
+	var res = gulp.src(path.watch.js);
+
+	if (watcher) {
+		res = gulp.src(path.watch.js, { base: path.app.js })
+			.pipe(watch(path.app.js, { base: path.app.js }));
+	}
+
+	res.pipe(gulpif(argv.prod, jsmin()))
+		.pipe(gulp.dest(path.dist.js))
+		.pipe(browserSync.stream());
+
+	if ( ! watcher)
+		return res;
+}
+
+
+/*--------------------------------------------------------
+| Images copy task
+--------------------------------------------------------*/
+function imagesCopyTask(watcher) {
+	var res = gulp.src(path.watch.images);
+
+	if (watcher) {
+		res = gulp.src(path.watch.images, { base: path.app.images })
+			.pipe(watch(path.app.images, { base: path.app.images }));
+	}
+
+	res.pipe(gulp.dest(path.dist.images));
+
+	if ( ! watcher)
+		return res;
+}
+
+
+/*--------------------------------------------------------
+| Fonts task
+--------------------------------------------------------*/
+function fontsCopyTask(watcher) {
+	var res = gulp.src(path.watch.fonts);
+
+	if (watcher) {
+		res = gulp.src(path.watch.fonts, { base: path.app.fonts })
+			.pipe(watch(path.app.fonts, { base: path.app.fonts }));
+	}
+
+	res.pipe(gulp.dest(path.dist.fonts));
+
+	if ( ! watcher)
+		return res;
+}
+
+
+/*--------------------------------------------------------
+| Misc files task
+--------------------------------------------------------*/
+function miscCopyTask(watcher) {
+	var res = gulp.src(config.appBase + '/*.{ico,png,txt}');
+
+	if (watcher) {
+		res = gulp.src(config.appBase + '/*.{ico,png,txt}', { base: config.appBase })
+			.pipe(watch(config.appBase, { base: config.appBase }));
+	}
+
+	res.pipe(gulp.dest(config.distBase));
+
+	if ( ! watcher)
+		return res;
+}
+
+
+/*--------------------------------------------------------
+| Tasks from functions
+--------------------------------------------------------*/
+gulp.task('jade', function(){ return jadeTask() });
+gulp.task('jade-watch', function(){ jadeTask(true) });
+
+gulp.task('postProdCss', function(){ return postProdCssTask() });
+gulp.task('postProdCss-watch', function(){ postProdCssTask(true) });
+
+gulp.task('javascript:copy', function(){ return javascriptCopyTask() });
+gulp.task('javascript:copy-watch', function(){ javascriptCopyTask(true) });
+
+gulp.task('images:copy', function(){ return imagesCopyTask() });
+gulp.task('images:copy-watch', function(){ imagesCopyTask(true) });
+
+gulp.task('fonts', function(){ return fontsCopyTask() });
+gulp.task('fonts-watch', function(){ fontsCopyTask(true) });
+
+gulp.task('misc', function(){ return miscCopyTask() });
+gulp.task('misc-watch', function(){ miscCopyTask(true) });
+
+
+/*--------------------------------------------------------
+ | Tinypng task
+ --------------------------------------------------------*/
+gulp.task('images:tinypng', function () {
+	return gulp.src(path.watch.distImages)
+		.pipe(tinypng({
+			key: config.tinypngApiKey,
+			log: true
+		}))
+		.pipe(gulp.dest(path.dist.images));
 });
 
-// compile sass
+
+/*--------------------------------------------------------
+| Compass (sass) task
+--------------------------------------------------------*/
 gulp.task('compass', function() {
 	return gulp.src(compileScssFiles)
 		.pipe(compass({
@@ -132,18 +274,10 @@ gulp.task('compass', function() {
 		.pipe(gulp.dest(path.dist.css));
 });
 
-// post production css
-gulp.task('postProdCss', function() {
-	return gulp.src(path.watch.distCss)
-		.pipe(autoprefixer({
-			browsers: config.autoprefixer
-		}))
-		.pipe(gulpif(argv.prod, minifyCss()))
-		.pipe(gulp.dest(path.dist.css))
-		.pipe(browserSync.stream());
-});
 
-// javascript concat
+/*--------------------------------------------------------
+| Javascript concat tasks
+--------------------------------------------------------*/
 function concatJsTask(file) {
 	gulp.task('javascript:concat:' + file, function() {
 		return gulp.src(concatJsFiles[file])
@@ -161,7 +295,6 @@ for (var file in concatJsFiles) {
 }
 
 gulp.task('javascript:concat', concatJsTasks);
-
 gulp.task('javascript:concat-watch', function() {
 	for (var file in concatJsFiles) {
 		gulp.src(concatJsFiles[file])
@@ -173,56 +306,10 @@ gulp.task('javascript:concat-watch', function() {
 	}
 });
 
-// javascript copy
-gulp.task('javascript:copy', function() {
-	return gulp.src(path.watch.js)
-		.pipe(gulpif(argv.prod, jsmin()))
-		.pipe(gulp.dest(path.dist.js))
-		.pipe(browserSync.stream());
-});
 
-gulp.task('javascript:copy-watch', function() {
-	gulp.src(path.watch.js, { base: path.app.js })
-		.pipe(watch(path.app.js, { base: path.app.js }))
-		.pipe(gulpif(argv.prod, jsmin()))
-		.pipe(gulp.dest(path.dist.js))
-		.pipe(browserSync.stream());
-});
-
-// images
-gulp.task('images:copy', function() {
-	return gulp.src(path.watch.images)
-		.pipe(gulp.dest(path.dist.images));
-});
-
-gulp.task('images:copy-watch', function() {
-	gulp.src(path.watch.images, { base: path.app.images })
-		.pipe(watch(path.app.images, { base: path.app.images }))
-		.pipe(gulp.dest(path.dist.images));
-});
-
-gulp.task('images:tinypng', function () {
-	return gulp.src(path.watch.distImages)
-		.pipe(tinypng({
-			key: config.tinypngApiKey,
-			log: true
-		}))
-		.pipe(gulp.dest(path.dist.images));
-});
-
-// fonts
-gulp.task('fonts', function() {
-	return gulp.src(path.watch.fonts)
-		.pipe(gulp.dest(path.dist.fonts));
-});
-
-gulp.task('fonts-watch', function() {
-	gulp.src(path.watch.fonts, { base: path.app.fonts })
-		.pipe(watch(path.app.fonts, { base: path.app.fonts }))
-		.pipe(gulp.dest(path.dist.fonts));
-});
-
-// clear dist
+/*--------------------------------------------------------
+| Clear task
+--------------------------------------------------------*/
 gulp.task('clear', function() {
 	if (argv.noimg) {
 		return del([
@@ -239,15 +326,12 @@ gulp.task('clear', function() {
 	]);
 });
 
-// misc
-gulp.task('misc', function () {
-	return gulp.src(config.appBase + '/*.{ico,png,txt}')
-		.pipe(gulp.dest(config.distBase));
-});
 
+/*--------------------------------------------------------
+| Build task
+--------------------------------------------------------*/
 var javascriptTask = Object.keys(concatJsFiles).length ? 'javascript:concat' : 'javascript:copy';
 
-// build dist
 gulp.task('build', function() {
 	runSequence(
 		'clear',
@@ -257,12 +341,24 @@ gulp.task('build', function() {
 	);
 });
 
-// dev env | browser-sync & watchers
-gulp.task('default', ['images:copy-watch', 'fonts-watch', javascriptTask + '-watch', 'jade-watch'], function() {
-	browserSync.init({
-		server: config.distBase
-	});
 
-	gulp.watch(path.watch.scss, ['compass']);
-	gulp.watch(path.watch.distCss, ['postProdCss']); // nie dziala jesli plik jest nowy, trzeba zrobic watcher taki jak ma fonts lub images ale to przy tasku na app/css
-});
+/*--------------------------------------------------------
+| Develop task
+--------------------------------------------------------*/
+gulp.task('default',
+	[
+		'images:copy-watch',
+		'fonts-watch',
+		javascriptTask + '-watch',
+		'jade-watch',
+		'postProdCss-watch',
+		'misc-watch'
+	],
+	function() {
+		browserSync.init({
+			server: config.distBase
+		});
+
+		gulp.watch(path.watch.scss, ['compass']);
+	}
+);
