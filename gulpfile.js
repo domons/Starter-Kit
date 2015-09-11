@@ -15,7 +15,7 @@ var config = {
 	appBase: './app',
 	distBase: './dist',
 	sassCache: './.sass-cache',
-	autoprefixer: ['last 5 version']
+	autoprefixer: ['last 15 version']
 },
 
 path = {
@@ -93,6 +93,31 @@ concatCont = require('gulp-continuous-concat');
 
 
 /*--------------------------------------------------------
+| Task factory function
+--------------------------------------------------------*/
+function taskFactory(src, destPath, callback, watchBase, bSync)
+{
+	callback = callback || function(res) { return res; };
+
+	var res = gulp.src(src);
+
+	if (watchBase)
+		res = gulp.src(src, { base: watchBase })
+			.pipe(watch(src, { base: watchBase }));
+
+	res = callback(res);
+
+	res.pipe(gulp.dest(destPath));
+
+	if (bSync)
+		res.pipe(bSync);
+
+	if ( ! watchBase)
+		return res;
+}
+
+
+/*--------------------------------------------------------
  | Test gulp task
  --------------------------------------------------------*/
 gulp.task('hello', function() {
@@ -103,147 +128,76 @@ gulp.task('hello', function() {
 /*--------------------------------------------------------
 | Jade task
 --------------------------------------------------------*/
-function jadeTask(watcher) {
-	var res = gulp.src(path.watch.jade_pages);
+var jadeCallback = function(res) {
+	return res.pipe(jade({
+		pretty: ! argv.prod
+	}));
+};
 
-	if (watcher) {
-		res = gulp.src(path.watch.jade_pages, { base: path.app.jade_pages })
-			.pipe(watch(path.app.jade_pages, { base: path.app.jade_pages }));
-	}
+gulp.task('jade', function() {
+	return taskFactory(path.watch.jade_pages, config.distBase, jadeCallback);
+});
 
-	res.pipe(jade({
-			pretty: ! argv.prod
-		}))
-		.pipe(gulp.dest(config.distBase))
-		.pipe(browserSync.reload({stream:true}));
-
-	if ( ! watcher)
-		return res;
-}
-
-
-/*--------------------------------------------------------
-| Post production CSS task
---------------------------------------------------------*/
-function postProdCssTask(watcher) {
-	var res = gulp.src(path.watch.distCss);
-
-	if (watcher) {
-		res = gulp.src(path.watch.distCss, { base: path.dist.css })
-				.pipe(watch(path.dist.css, { base: path.dist.css }));
-	}
-
-	res.pipe(autoprefixer({
-			browsers: config.autoprefixer
-		}))
-		.pipe(gulpif(argv.prod, minifyCss()))
-		.pipe(gulp.dest(path.dist.css))
-		.pipe(browserSync.stream());
-
-	if ( ! watcher)
-		return res;
-}
+gulp.task('jade-watch', function() {
+	taskFactory(path.watch.jade_pages, config.distBase, jadeCallback, path.app.jade_pages, browserSync.reload({stream:true}));
+});
 
 
 /*--------------------------------------------------------
 | Javascript copy task
 --------------------------------------------------------*/
-function javascriptCopyTask(watcher) {
-	var res = gulp.src(path.watch.js);
+var javascriptCopyCallback = function(res) {
+	return res.pipe(gulpif(argv.prod, jsmin()));
+};
 
-	if (watcher) {
-		res = gulp.src(path.watch.js, { base: path.app.js })
-			.pipe(watch(path.app.js, { base: path.app.js }));
-	}
+gulp.task('javascript:copy', function() {
+	return taskFactory(path.watch.js, path.dist.js, javascriptCopyCallback);
+});
 
-	res.pipe(gulpif(argv.prod, jsmin()))
-		.pipe(gulp.dest(path.dist.js))
-		.pipe(browserSync.stream());
-
-	if ( ! watcher)
-		return res;
-}
+gulp.task('javascript:copy-watch', function() {
+	taskFactory(path.watch.js, path.dist.js, javascriptCopyCallback, path.app.js, browserSync.stream());
+});
 
 
 /*--------------------------------------------------------
 | Images copy task
 --------------------------------------------------------*/
-function imagesCopyTask(watcher) {
-	var res = gulp.src(path.watch.images);
+gulp.task('images:copy', function() {
+	return taskFactory(path.watch.images, path.dist.images);
+});
 
-	if (watcher) {
-		res = gulp.src(path.watch.images, { base: path.app.images })
-			.pipe(watch(path.app.images, { base: path.app.images }));
-	}
-
-	res.pipe(gulp.dest(path.dist.images));
-
-	if ( ! watcher)
-		return res;
-}
+gulp.task('images:copy-watch', function() {
+	taskFactory(path.watch.images, path.dist.images, null, path.app.images);
+});
 
 
 /*--------------------------------------------------------
 | Fonts task
 --------------------------------------------------------*/
-function fontsCopyTask(watcher) {
-	var res = gulp.src(path.watch.fonts);
+gulp.task('fonts', function() {
+	return taskFactory(path.watch.fonts, path.dist.fonts);
+});
 
-	if (watcher) {
-		res = gulp.src(path.watch.fonts, { base: path.app.fonts })
-			.pipe(watch(path.app.fonts, { base: path.app.fonts }));
-	}
-
-	res.pipe(gulp.dest(path.dist.fonts));
-
-	if ( ! watcher)
-		return res;
-}
+gulp.task('fonts-watch', function() {
+	taskFactory(path.watch.fonts, path.dist.fonts, null, path.app.fonts);
+});
 
 
 /*--------------------------------------------------------
-| Misc files task
+| Extras files task
 --------------------------------------------------------*/
-function miscCopyTask(watcher) {
-	var res = gulp.src(config.appBase + '/*.{ico,png,txt}');
+gulp.task('extras', function() {
+	return taskFactory([config.appBase + '/*.{ico,png,txt}', config.appBase + '/.htaccess'], config.distBase);
+});
 
-	if (watcher) {
-		res = gulp.src(config.appBase + '/*.{ico,png,txt}', { base: config.appBase })
-			.pipe(watch(config.appBase, { base: config.appBase }));
-	}
-
-	res.pipe(gulp.dest(config.distBase));
-
-	if ( ! watcher)
-		return res;
-}
+gulp.task('extras-watch', function() {
+	taskFactory([config.appBase + '/*.{ico,png,txt}', config.appBase + '/.htaccess'], config.distBase, null, config.appBase);
+});
 
 
 /*--------------------------------------------------------
-| Tasks from functions
+| Tinypng task
 --------------------------------------------------------*/
-gulp.task('jade', function(){ return jadeTask() });
-gulp.task('jade-watch', function(){ jadeTask(true) });
-
-gulp.task('postProdCss', function(){ return postProdCssTask() });
-gulp.task('postProdCss-watch', function(){ postProdCssTask(true) });
-
-gulp.task('javascript:copy', function(){ return javascriptCopyTask() });
-gulp.task('javascript:copy-watch', function(){ javascriptCopyTask(true) });
-
-gulp.task('images:copy', function(){ return imagesCopyTask() });
-gulp.task('images:copy-watch', function(){ imagesCopyTask(true) });
-
-gulp.task('fonts', function(){ return fontsCopyTask() });
-gulp.task('fonts-watch', function(){ fontsCopyTask(true) });
-
-gulp.task('misc', function(){ return miscCopyTask() });
-gulp.task('misc-watch', function(){ miscCopyTask(true) });
-
-
-/*--------------------------------------------------------
- | Tinypng task
- --------------------------------------------------------*/
 gulp.task('images:tinypng', function () {
 	return gulp.src(path.watch.distImages)
 		.pipe(tinypng({
@@ -271,7 +225,12 @@ gulp.task('compass', function() {
 			console.log(error);
 			this.emit('end');
 		})
-		.pipe(gulp.dest(path.dist.css));
+		.pipe(autoprefixer({
+			browsers: config.autoprefixer
+		}))
+		.pipe(gulpif(argv.prod, minifyCss()))
+		.pipe(gulp.dest(path.dist.css))
+		.pipe(browserSync.stream());
 });
 
 
@@ -335,9 +294,8 @@ var javascriptTask = Object.keys(concatJsFiles).length ? 'javascript:concat' : '
 gulp.task('build', function() {
 	runSequence(
 		'clear',
-		['fonts', 'images:copy', javascriptTask, 'jade', 'misc'],
-		'compass',
-		'postProdCss'
+		['fonts', 'images:copy', javascriptTask, 'jade', 'extras'],
+		'compass'
 	);
 });
 
@@ -351,8 +309,7 @@ gulp.task('default',
 		'fonts-watch',
 		javascriptTask + '-watch',
 		'jade-watch',
-		'postProdCss-watch',
-		'misc-watch'
+		'extras-watch'
 	],
 	function() {
 		browserSync.init({
