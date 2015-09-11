@@ -34,18 +34,23 @@ Example `['last 5 version', 'safari 5', 'ie 8', 'ie 9', 'opera 12.1']`
 Example **concatJsFiles**:
 ```
 concatJsFiles = {
-	result_file_name: [
+	concat_file_name: [
 		path.app.js + '/files.js',
 		path.app.js + '/to.js',
 		path.app.js + '/concat.js'
 	],
 	other_file: [
-		path.app.js + 'any.js',
-		path.app.js + 'file.js'
+		path.app.js + '/any.js',
+		path.app.js + '/file.js'
 	]
 
 	//or_all_files: [
-	//	path.app.js + '*.js'
+	//	path.app.js + '/*.js'
+	//]
+
+	//or_all_files_and_one_first: [
+	//	path.app.js + '/file.js',
+	//	path.app.js + '/*.js'
 	//]
 }
 ```
@@ -55,10 +60,9 @@ If you set empty object `concatJsFiles = { }` all *.js will be copied from app/j
 
 | Command       | Description   |
 | ------------- | ------------- |
-| `gulp hello`  | Checks if Gulp works |
-| `gulp images:tinypng` | Compresses images **from dist/images/** using tinypng.com |
-| `gulp clear` | Removing .sass-cache/ and whole dist/ directory |
-| `gulp clear --noimg` | Removing .sass-cache/ and dist/ directory except dist/images/ |
 | `gulp build` | Build project (generate dist/ directory) |
 | `gulp build --prod` | Build project and minify html, css, js |
 | `gulp` | Run dev environment (browser-sync and watchers) |
+| `gulp clear` | Removing .sass-cache/ and whole dist/ directory |
+| `gulp clear --noimg` | Removing .sass-cache/ and dist/ directory except dist/images/ |
+| `gulp images:tinypng` | Compresses images **from dist/images/** using tinypng.com |

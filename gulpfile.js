@@ -92,7 +92,8 @@ minifyCss = require('gulp-minify-css'),
 gulpif = require('gulp-if'),
 jsmin = require('gulp-jsmin'),
 concat = require('gulp-concat'),
-concatCont = require('gulp-continuous-concat');
+concatCont = require('gulp-continuous-concat'),
+replace = require('gulp-replace');
 
 
 /*--------------------------------------------------------
@@ -124,14 +125,15 @@ function compassTask() {
 			css: path.dist.css,
 			sass: path.app.scss,
 			image: path.dist.images,
-			fonts: path.dist.fonts,
+			font: path.dist.fonts,
 			style: 'expanded',
-			relative_assets: false
+			relative: false
 		}))
 		.on('error', function(error) {
 			console.log(error);
 			this.emit('end');
 		})
+		.pipe(replace('../../', '../'))
 		.pipe(autoprefixer({
 			browsers: config.autoprefixer
 		}))
