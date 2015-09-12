@@ -8,7 +8,7 @@ var config = {
 	appBase: './app',
 	distBase: './dist',
 	sassCache: './.sass-cache',
-	autoprefixer: ['last 15 version']
+	autoprefixer: ['last 5 version']
 },
 
 path = {
