@@ -1,11 +1,6 @@
-/*
- TODO:
-	not exit after sass bug
-*/
-
 /*--------------------------------------------------------
 | Configuration
-| Get your tinypng api key:
+| Tinypng api key:
 |	https://tinypng.com/developers
 --------------------------------------------------------*/
 var config = {
@@ -34,7 +29,6 @@ path = {
 	},
 	watch: {
 		css: config.appBase + '/css/**/*.css',
-		distCss: config.distBase + '/css/**/*.css',
 		fonts: config.appBase + '/fonts/**/*',
 		images: config.appBase + '/images/**/*',
 		distImages: config.distBase + '/images/**/*.{png,jpg,jpeg}',
@@ -68,7 +62,7 @@ concatJsFiles = {
 concatCssFiles = {
 //	vendors: [
 //		path.app.css + '/font-awesome.css',
-//		path.app.css + '/font-awesome2.css'
+//		path.app.css + '/lightbox.css'
 //	]
 },
 
