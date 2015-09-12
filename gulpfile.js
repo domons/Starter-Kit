@@ -75,6 +75,7 @@ concatCssFiles = {
 //	]
 },
 
+
 /*--------------------------------------------------------
 | Gulp modules
 --------------------------------------------------------*/
@@ -109,12 +110,6 @@ function jadeTask() {
 
 gulp.task('jade', jadeTask);
 
-gulp.task('jade-watch', function() {
-	watch(path.watch.jade, function() {
-		jadeTask().pipe(browserSync.reload({stream:true}));
-	});
-});
-
 
 /*--------------------------------------------------------
 | Compass (sass)
@@ -142,12 +137,6 @@ function compassTask() {
 }
 
 gulp.task('compass', compassTask);
-
-gulp.task('compass-watch', function() {
-	watch(path.watch.scss, function() {
-		compassTask().pipe(browserSync.stream());
-	});
-});
 
 
 /*--------------------------------------------------------
@@ -210,10 +199,6 @@ function imagesCopyTask() {
 
 gulp.task('images:copy', imagesCopyTask);
 
-gulp.task('images:copy-watch', function() {
-	watch(path.watch.images, imagesCopyTask);
-});
-
 
 /*--------------------------------------------------------
 | Fonts
@@ -225,10 +210,6 @@ function fontsTask() {
 
 gulp.task('fonts', fontsTask);
 
-gulp.task('fonts-watch', function() {
-	watch(path.watch.fonts, fontsTask);
-});
-
 
 /*--------------------------------------------------------
 | Extra files
@@ -239,10 +220,6 @@ function extrasTask() {
 }
 
 gulp.task('extras', extrasTask);
-
-gulp.task('extras-watch', function() {
-	watch(path.watch.extras, extrasTask);
-});
 
 
 /*--------------------------------------------------------
@@ -271,10 +248,7 @@ gulp.task('clear', function() {
 		]);
 	}
 
-	return del([
-		config.sassCache,
-		config.distBase
-	]);
+	return del([config.sassCache, config.distBase]);
 });
 
 
@@ -295,18 +269,20 @@ gulp.task('build', function() {
 /*--------------------------------------------------------
 | Develop dist
 --------------------------------------------------------*/
-gulp.task('default',
-	[
-		'fonts-watch',
-		'images:copy-watch',
-		javascriptTask + '-watch',
-		'jade-watch',
-		'extras-watch',
-		'compass-watch'
-	],
-	function() {
-		browserSync.init({
-			server: config.distBase
-		});
-	}
-);
+gulp.task('default', [javascriptTask + '-watch'], function() {
+	browserSync.init({
+		server: config.distBase
+	});
+
+	watch(path.watch.jade, function() {
+		jadeTask().pipe(browserSync.reload({stream:true}));
+	});
+
+	watch(path.watch.scss, function() {
+		compassTask().pipe(browserSync.stream());
+	});
+
+	watch(path.watch.images, imagesCopyTask);
+	watch(path.watch.fonts, fontsTask);
+	watch(path.watch.extras, extrasTask);
+});
