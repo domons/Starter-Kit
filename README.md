@@ -12,6 +12,9 @@ Ground zero for your next project using [Compass](http://compass-style.org/), [J
 - Minify HTML, CSS, JavaScript
 - Concat CSS, JavaScript
 - Image compression using tinypng.com
+- Useful SCSS mixins
+- Default styles & reset.css
+- Default HTML Structure in Jade
 
 ## How to install
 - If you haven't [Node.js](https://nodejs.org/en/) and [Compass](http://compass-style.org/) with Ruby on your computer, install it.
@@ -21,7 +24,7 @@ Ground zero for your next project using [Compass](http://compass-style.org/), [J
 - and `npm install`
 - **DONE**
 
-## Configuration
+## Configuration gulpfile.js
 #### TinyPng Api Key
 Take api key from [here](https://tinypng.com/developers) and set it in **config.tinypngApiKey**
 
