@@ -113,13 +113,14 @@ function compassTask() {
 			image: path.dist.images,
 			font: path.dist.fonts,
 			style: 'expanded',
-			relative: false
+			relative: true
 		}))
 		.on('error', function(error) {
 			console.log(error);
 			this.emit('end');
 		})
 		.pipe(replace('../../', '../'))
+		.pipe(replace(path.dist.images, '../images'))
 		.pipe(autoprefixer({
 			browsers: config.autoprefixer
 		}))
