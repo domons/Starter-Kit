@@ -1,17 +1,17 @@
-# It is not finished yet!
-
 # Starter-Kit
+
+![Vilio Theme](/splash.jpg)
+
 Ground zero for your next project using [Compass](http://compass-style.org/), [Jade](http://jade-lang.com/) and [Gulp.js](http://gulpjs.com/).
 
 ## Features
-- Compiles jade
+- Compiles Jade
 - Compiles Sass/Scss files using Compass
 - Autoprefixer CSS
 - BrowserSync
 - Minify HTML, CSS, JavaScript
 - Concat CSS, JavaScript
 - Image compression using tinypng.com
-
 
 ## How to install
 - If you haven't [Node.js](https://nodejs.org/en/) and [Compass](http://compass-style.org/) with Ruby on your computer, install it.
@@ -55,6 +55,20 @@ concatJsFiles = {
 }
 ```
 If you set empty object `concatJsFiles = { }` all *.js will be copied from app/js to dist/js with the same names.
+
+#### CSS concat files
+Example **concatCssFiles**:
+```
+concatCssFiles = {
+	vendors: [
+		path.app.css + '/font-awesome.css',
+		path.app.css + '/lightbox.css'
+	]
+}
+```
+The same way like in JavaScript concat.
+
+**Warning!** You shouldn't use CSS here, which generates compass.
 
 ## How to use
 
