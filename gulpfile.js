@@ -1,8 +1,6 @@
 /*
  TODO:
- js concat order
- *.css copy
- css concat
+	not exit after sass bug
 */
 
 /*--------------------------------------------------------
@@ -63,15 +61,14 @@ compileScssFiles = [
 concatJsFiles = {
 //	main: [
 //		path.app.js + '/main.js',
-//		path.app.js + '/new.js',
 //		path.app.js + '/*.js'
 //	]
 },
 
 concatCssFiles = {
-//	main: [
-//		'main.js',
-//		'test.js'
+//	vendors: [
+//		path.app.css + '/font-awesome.css',
+//		path.app.css + '/font-awesome2.css'
 //	]
 },
 
@@ -172,6 +169,44 @@ gulp.task('javascript:concat-watch', function() {
 
 
 /*--------------------------------------------------------
+| CSS concat
+--------------------------------------------------------*/
+function concatCssTask(file) {
+	gulp.task('css:concat:' + file, function() {
+		return gulp.src(concatCssFiles[file])
+			.pipe(concat(file + '.css'))
+			.pipe(autoprefixer({
+				browsers: config.autoprefixer
+			}))
+			.pipe(gulpif(argv.prod, minifyCss()))
+			.pipe(gulp.dest(path.dist.css));
+	});
+}
+
+var concatCssTasks = [];
+for (var file in concatCssFiles) {
+	concatCssTask(file);
+	concatCssTasks.push('css:concat:' + file);
+}
+
+gulp.task('css:concat', concatCssTasks);
+
+gulp.task('css:concat-watch', function() {
+	for (var file in concatCssFiles) {
+		gulp.src(concatCssFiles[file])
+			.pipe(watch(concatCssFiles[file]))
+			.pipe(concatCont(file + '.css'))
+			.pipe(autoprefixer({
+				browsers: config.autoprefixer
+			}))
+			.pipe(gulpif(argv.prod, minifyCss()))
+			.pipe(gulp.dest(path.dist.css))
+			.pipe(browserSync.stream());
+	}
+});
+
+
+/*--------------------------------------------------------
 | Javascript copy
 --------------------------------------------------------*/
 function jsCopyTask() {
@@ -185,6 +220,27 @@ gulp.task('javascript:copy', jsCopyTask);
 gulp.task('javascript:copy-watch', function() {
 	watch(path.watch.js, function() {
 		jsCopyTask().pipe(browserSync.stream());
+	});
+});
+
+
+/*--------------------------------------------------------
+| CSS copy
+--------------------------------------------------------*/
+function cssCopyTask() {
+	return gulp.src(path.watch.css)
+		.pipe(autoprefixer({
+			browsers: config.autoprefixer
+		}))
+		.pipe(gulpif(argv.prod, minifyCss()))
+		.pipe(gulp.dest(path.dist.css));
+}
+
+gulp.task('css:copy', cssCopyTask);
+
+gulp.task('css:copy-watch', function() {
+	watch(path.watch.css, function() {
+		cssCopyTask().pipe(browserSync.stream());
 	});
 });
 
@@ -256,11 +312,12 @@ gulp.task('clear', function() {
 | Build dist
 --------------------------------------------------------*/
 var javascriptTask = Object.keys(concatJsFiles).length ? 'javascript:concat' : 'javascript:copy';
+var cssTask = Object.keys(concatCssFiles).length ? 'css:concat' : 'css:copy';
 
 gulp.task('build', function() {
 	runSequence(
 		'clear',
-		['fonts', 'images:copy', javascriptTask, 'jade', 'extras'],
+		['fonts', 'images:copy', javascriptTask, cssTask, 'jade', 'extras'],
 		'compass'
 	);
 });
@@ -269,7 +326,7 @@ gulp.task('build', function() {
 /*--------------------------------------------------------
 | Develop dist
 --------------------------------------------------------*/
-gulp.task('default', [javascriptTask + '-watch'], function() {
+gulp.task('default', [javascriptTask + '-watch', cssTask + '-watch'], function() {
 	browserSync.init({
 		server: config.distBase
 	});

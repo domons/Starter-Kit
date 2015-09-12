@@ -3,14 +3,19 @@
 @import "compass/utilities";
 @import "compass/layout";
 
-@import "tools/_fonts";
-@import "tools/_mixins";
-@import "tools/_vars";
+/* Tools */
+@import "tools/vars";
+@import "tools/mixins";
+@import "tools/fonts";
 
-/* Global */
-@import "global";
-@import "modules/header";
-@import "modules/footer";
+/* Basic */
+@import "basic/global";
+@import "basic/header";
+@import "basic/footer";
+
+/* Components */
+//@import "components/";
 
 /* Pages */
-@import "pages/page_index";
+@import "pages/index";
+
