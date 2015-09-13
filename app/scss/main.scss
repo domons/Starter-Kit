@@ -4,9 +4,9 @@
 @import "compass/layout";
 
 /* Tools */
-@import "tools/vars";
-@import "tools/mixins";
-@import "tools/fonts";
+@import "_tools/vars";
+@import "_tools/mixins";
+@import "_tools/fonts";
 
 /* Basic */
 @import "basic/global";
