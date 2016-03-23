@@ -102,6 +102,10 @@ function jadeTask() {
 		.pipe(jade({
 			pretty: ! argv.prod
 		}))
+		.on('error', function(error) {
+			console.log(error);
+			this.emit('end');
+		})
 		.pipe(gulp.dest(config.distBase));
 }
 
