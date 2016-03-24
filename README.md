@@ -1,6 +1,6 @@
 # Starter-Kit
 
-![Vilio Theme](/splash.jpg)
+![Starter Kit - Dominik Barylski](/splash.jpg)
 
 Ground zero for your next project using [Compass](http://compass-style.org/), [Jade](http://jade-lang.com/) and [Gulp.js](http://gulpjs.com/).
 
